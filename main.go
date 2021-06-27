@@ -8,7 +8,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var homeTemplate *template.Template
+var (
+	homeTemplate    *template.Template
+	contactTemplate *template.Template
+)
 
 type User struct {
 	Name string
@@ -22,7 +25,9 @@ type Pet struct {
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "To get in touch, please send an email to <a href=\"mailto:vincent.sabatini@gmail.com\">vincent.sabatini@gmail.com</a>")
+	if err := contactTemplate.Execute(w, nil); err != nil {
+		panic(err)
+	}
 }
 
 func faq(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +52,7 @@ func notfound(w http.ResponseWriter, r *http.Request) {
 
 func templatePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("templates/hello.gohtml")
+	t, err := template.ParseFiles("views/hello.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -65,6 +70,11 @@ func templatePage(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var err error
 	homeTemplate, err = template.ParseFiles("views/home.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
+	contactTemplate, err = template.ParseFiles("views/contact.gohtml")
 	if err != nil {
 		panic(err)
 	}
