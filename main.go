@@ -9,7 +9,9 @@ import (
 )
 
 type User struct {
-	Name string
+	Name   string
+	Owner  string
+	PetAge int
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +45,9 @@ func templatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := User{
-		Name: "Howie",
+		Name:   "Howie",
+		Owner:  "Vinny",
+		PetAge: 1,
 	}
 
 	fmt.Fprint(w, t.Execute(w, data))
