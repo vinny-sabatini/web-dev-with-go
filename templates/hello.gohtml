@@ -1,2 +1,4 @@
 <h1>Hello, {{.Name}}</h1>
-<p>Your dog {{.Pet.Name}} is {{.Pet.Age}}</p>
+{{range .Pets}}
+<p>Your dog {{.Name}} is {{.Age}}</p>
+{{end}}

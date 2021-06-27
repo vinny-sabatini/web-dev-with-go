@@ -9,9 +9,8 @@ import (
 )
 
 type User struct {
-	Name  string
-	Owner string
-	Pet   Pet
+	Name string
+	Pets []Pet
 }
 
 type Pet struct {
@@ -49,15 +48,12 @@ func templatePage(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	user := User{
+	data := User{
 		Name: "Vinny",
-		Pet: Pet{
-			Name: "Howie",
-			Age:  1,
-		},
+		Pets: []Pet{{Name: "Howie", Age: 1}, {Name: "Winston", Age: 2}},
 	}
 
-	fmt.Fprint(w, t.Execute(w, user))
+	fmt.Fprint(w, t.Execute(w, data))
 }
 
 func main() {
