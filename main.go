@@ -8,6 +8,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var homeTemplate *template.Template
+
 type User struct {
 	Name string
 	Pets []Pet
@@ -31,7 +33,9 @@ func faq(w http.ResponseWriter, r *http.Request) {
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<h1>Hello world!</h1>")
+	if err := homeTemplate.Execute(w, nil); err != nil {
+		panic(err)
+	}
 }
 
 func notfound(w http.ResponseWriter, r *http.Request) {
@@ -53,10 +57,18 @@ func templatePage(w http.ResponseWriter, r *http.Request) {
 		Pets: []Pet{{Name: "Howie", Age: 1}, {Name: "Winston", Age: 2}},
 	}
 
-	fmt.Fprint(w, t.Execute(w, data))
+	if err := t.Execute(w, data); err != nil {
+		panic(err)
+	}
 }
 
 func main() {
+	var err error
+	homeTemplate, err = template.ParseFiles("views/home.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(notfound)
 	r.HandleFunc("/", home)
