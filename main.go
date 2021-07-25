@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -9,8 +8,9 @@ import (
 )
 
 var (
-	homeView    *views.View
-	contactView *views.View
+	homeView     *views.View
+	contactView  *views.View
+	notFoundView *views.View
 )
 
 func contact(w http.ResponseWriter, r *http.Request) {
@@ -19,12 +19,6 @@ func contact(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func faq(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<h1>FAQ</h1>")
-	fmt.Fprint(w, "<p>This page is still in development</p>")
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -38,18 +32,20 @@ func home(w http.ResponseWriter, r *http.Request) {
 func notfound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprint(w, "<h1>404</h1>")
-	fmt.Fprint(w, "<p>Eh you lost there bud?</p>")
+	err := notFoundView.Template.ExecuteTemplate(w, notFoundView.Layout, nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
 	homeView = views.NewView("bootstrap", "views/home.gohtml")
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
+	notFoundView = views.NewView("bootstrap", "views/notFound.gohtml")
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(notfound)
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
-	r.HandleFunc("/faq", faq)
 	http.ListenAndServe(":3000", r)
 }
