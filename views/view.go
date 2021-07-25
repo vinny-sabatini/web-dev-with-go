@@ -7,6 +7,8 @@ func NewView(files ...string) *View {
 
 	t, err := template.ParseFiles(files...)
 	if err != nil {
+		// We are panicing here because this is only being used when the application is starting,
+		// there is not a good way to recover, the app should not start when pages are missing
 		panic(err)
 	}
 	return &View{

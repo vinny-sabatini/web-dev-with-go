@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/vinny-sabatini/web-dev-with-go/views"
 )
 
 var (
-	homeTemplate    *template.Template
-	contactTemplate *template.Template
+	homeView     *views.View
+	contactView  *views.View
+	templateView *views.View
 )
 
 type User struct {
@@ -25,7 +26,8 @@ type Pet struct {
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := contactTemplate.Execute(w, nil); err != nil {
+	err := contactView.Template.Execute(w, nil)
+	if err != nil {
 		panic(err)
 	}
 }
@@ -38,7 +40,8 @@ func faq(w http.ResponseWriter, r *http.Request) {
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := homeTemplate.Execute(w, nil); err != nil {
+	err := homeView.Template.Execute(w, nil)
+	if err != nil {
 		panic(err)
 	}
 }
@@ -52,43 +55,21 @@ func notfound(w http.ResponseWriter, r *http.Request) {
 
 func templatePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles(
-		"views/hello.gohtml",
-		"views/layouts/footer.gohtml",
-	)
-	if err != nil {
-		panic(err)
-	}
-
 	data := User{
 		Name: "Vinny",
 		Pets: []Pet{{Name: "Howie", Age: 1}, {Name: "Winston", Age: 2}},
 	}
 
-	if err := t.Execute(w, data); err != nil {
+	err := templateView.Template.Execute(w, data)
+	if err != nil {
 		panic(err)
 	}
 }
 
 func main() {
-	var err error
-	homeTemplate, err = template.ParseFiles(
-		"views/home.gohtml",
-		"views/layouts/footer.gohtml",
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	contactTemplate, err = template.ParseFiles(
-		"views/contact.gohtml",
-		"views/layouts/footer.gohtml",
-	)
-
-	if err != nil {
-		panic(err)
-	}
+	homeView = views.NewView("views/home.gohtml")
+	contactView = views.NewView("views/contact.gohtml")
+	templateView = views.NewView("views/hello.gohtml")
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(notfound)
