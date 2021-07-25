@@ -9,20 +9,9 @@ import (
 )
 
 var (
-	homeView     *views.View
-	contactView  *views.View
-	templateView *views.View
+	homeView    *views.View
+	contactView *views.View
 )
-
-type User struct {
-	Name string
-	Pets []Pet
-}
-
-type Pet struct {
-	Name string
-	Age  int
-}
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
@@ -53,29 +42,14 @@ func notfound(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<p>Eh you lost there bud?</p>")
 }
 
-func templatePage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	data := User{
-		Name: "Vinny",
-		Pets: []Pet{{Name: "Howie", Age: 1}, {Name: "Winston", Age: 2}},
-	}
-
-	err := templateView.Template.Execute(w, data)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func main() {
 	homeView = views.NewView("views/home.gohtml")
 	contactView = views.NewView("views/contact.gohtml")
-	templateView = views.NewView("views/hello.gohtml")
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(notfound)
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
 	r.HandleFunc("/faq", faq)
-	r.HandleFunc("/templatePage", templatePage)
 	http.ListenAndServe(":3000", r)
 }
