@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/vinny-sabatini/web-dev-with-go/controllers"
 	"github.com/vinny-sabatini/web-dev-with-go/views"
 )
 
@@ -11,7 +12,6 @@ var (
 	contactView  *views.View
 	homeView     *views.View
 	notFoundView *views.View
-	signUpView   *views.View
 )
 
 func contact(w http.ResponseWriter, r *http.Request) {
@@ -30,22 +30,17 @@ func notfound(w http.ResponseWriter, r *http.Request) {
 	must(notFoundView.Render(w, nil))
 }
 
-func signup(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	must(signUpView.Render(w, nil))
-}
-
 func main() {
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
 	homeView = views.NewView("bootstrap", "views/home.gohtml")
 	notFoundView = views.NewView("bootstrap", "views/notFound.gohtml")
-	signUpView = views.NewView("bootstrap", "views/signup.gohtml")
+	usersC := controllers.NewUsers()
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(notfound)
 	r.HandleFunc("/contact", contact)
 	r.HandleFunc("/", home)
-	r.HandleFunc("/signup", signup)
+	r.HandleFunc("/signup", usersC.New)
 	http.ListenAndServe(":3000", r)
 }
 
