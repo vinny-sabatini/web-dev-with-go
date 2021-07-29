@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/schema"
 	"github.com/vinny-sabatini/web-dev-with-go/views"
 )
 
@@ -27,11 +28,26 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 	u.NewView.Render(w, nil)
 }
 
+type SignupForm struct {
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
+}
+
 // Create is used to process the signup form when a user submits it
 // This is used to create a new user account
 //
 // POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, r.PostFormValue("email"))
-	fmt.Fprintln(w, r.PostFormValue("password"))
+	if err := r.ParseForm(); err != nil {
+		panic(err)
+	}
+
+	dec := schema.NewDecoder()
+	var form SignupForm
+	err := dec.Decode(&form, r.PostForm)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintln(w, form)
 }
