@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/schema"
 	"github.com/vinny-sabatini/web-dev-with-go/views"
 )
 
@@ -38,16 +37,10 @@ type SignupForm struct {
 //
 // POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		panic(err)
-	}
-
-	dec := schema.NewDecoder()
 	var form SignupForm
-	err := dec.Decode(&form, r.PostForm)
+	err := parseForm(r, &form)
 	if err != nil {
 		panic(err)
 	}
-
 	fmt.Fprintln(w, form)
 }
