@@ -49,6 +49,13 @@ func main() {
 
 	createTestData(db)
 
+	var users []User
+	if err := db.Preload("Orders").Find(&users).Error; err != nil {
+		panic(err)
+	}
+	for _, user := range users {
+		fmt.Println(user)
+	}
 }
 
 func createOrder(db *gorm.DB, user User, amount int, desc string) {
