@@ -28,9 +28,21 @@ func main() {
 	}
 	defer us.Close()
 	us.DestructiveReset()
-	// user, err := us.ById(1)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(user)
+	users := []models.User{{
+		Name:  "Vinny",
+		Email: "vinny@gmail.com",
+	}, {
+		Name:  "Ashley",
+		Email: "ashley@gmail.com",
+	}}
+	for _, user := range users {
+		if err := us.Create(&user); err != nil {
+			panic(err)
+		}
+	}
+	getUser, err := us.ById(1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(getUser)
 }
