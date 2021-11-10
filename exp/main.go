@@ -22,9 +22,17 @@ const (
 
 type User struct {
 	gorm.Model
-	Name  string
-	Email string `gorm:"not null;unique_index"`
-	Color string
+	Name   string
+	Email  string `gorm:"not null;unique_index"`
+	Color  string
+	Orders []Order
+}
+
+type Order struct {
+	gorm.Model
+	UserID      uint
+	Amount      int
+	Description string
 }
 
 func main() {
@@ -35,25 +43,49 @@ func main() {
 	}
 	defer db.Close()
 
-	db.LogMode(true) // Log SQL commands as code runs
-	//db.DropTableIfExists(&User{}) // For testing, clear database
-	db.AutoMigrate(&User{})
+	//db.LogMode(true) // Log SQL commands as code runs
+	db.DropTableIfExists(&User{}, &Order{}) // For testing, clear database
+	db.AutoMigrate(&User{}, &Order{})
+
+	createTestData(db)
+
+}
+
+func createOrder(db *gorm.DB, user User, amount int, desc string) {
+	err := db.Create(&Order{
+		UserID:      user.ID,
+		Amount:      amount,
+		Description: desc,
+	}).Error
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func createUser(db *gorm.DB, name, email, color string) {
+	err := db.Create(&User{
+		Name:  name,
+		Email: email,
+		Color: color,
+	}).Error
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func createTestData(db *gorm.DB) {
+	createUser(db, "Vinny", "vinny@gmail.com", "green")
+	createUser(db, "Ashley", "ashley@gmail.com", "red")
+	createUser(db, "Howie", "howie@gmail.com", "black")
 
 	var users []User
 	if err := db.Find(&users).Error; err != nil {
 		panic(err)
 	}
-	for _, user := range users {
-		fmt.Println(user)
-	}
 
-	var user User
-	if err := db.Where("name = ?", "doesnotexist").Find(&user).Error; err != nil {
-		switch err {
-		case gorm.ErrRecordNotFound:
-			fmt.Println("No users found")
-		default:
-			panic(err)
-		}
+	for index, user := range users {
+		createOrder(db, user, index*100, fmt.Sprintf("My description %v", index))
 	}
 }
