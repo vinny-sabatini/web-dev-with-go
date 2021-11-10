@@ -40,9 +40,20 @@ func main() {
 	db.AutoMigrate(&User{})
 
 	var users []User
-	db.Find(&users)
-	fmt.Println(len(users))
+	if err := db.Find(&users).Error; err != nil {
+		panic(err)
+	}
 	for _, user := range users {
 		fmt.Println(user)
+	}
+
+	var user User
+	if err := db.Where("name = ?", "doesnotexist").Find(&user).Error; err != nil {
+		switch err {
+		case gorm.ErrRecordNotFound:
+			fmt.Println("No users found")
+		default:
+			panic(err)
+		}
 	}
 }
