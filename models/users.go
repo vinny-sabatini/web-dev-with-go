@@ -32,6 +32,8 @@ var (
 	ErrorInvalidID = errors.New("models: ID provided was invalid")
 )
 
+const userPwPepper = "lets-go-red-wings"
+
 // ById will look up a user by a given UID
 // If a user is found, we will not return an error
 // If a user is not found, we will return ErrNotFound
@@ -70,7 +72,8 @@ func first(db *gorm.DB, dst interface{}) error {
 // like the ID, CreatedAt, and UpdatedAt fields
 // This will return the error if there is one
 func (us *UserService) Create(user *User) error {
-	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	pwBytes := []byte(user.Password + userPwPepper)
+	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
