@@ -62,7 +62,8 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintln(w, &user)
+	signIn(w, &user)
+	http.Redirect(w, r, "/cookieTest", http.StatusFound)
 }
 
 // Login is used to verify the provided email address and
@@ -88,12 +89,17 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	signIn(w, user)
+	http.Redirect(w, r, "/cookieTest", http.StatusFound)
+}
+
+// signIn is used to sign a user in via cookies
+func signIn(w http.ResponseWriter, user *models.User) {
 	cookie := http.Cookie{
 		Name:  "email",
 		Value: user.Email,
 	}
 	http.SetCookie(w, &cookie)
-	fmt.Fprintln(w, user)
 }
 
 // Cookie test is used to display cookies set on current user
