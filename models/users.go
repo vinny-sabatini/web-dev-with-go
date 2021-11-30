@@ -11,6 +11,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var (
+	// ErrNotFound is returned if a resource is not found in the database
+	ErrNotFound = errors.New("models: resource not found")
+
+	// ErrInvalidID is return when an invalid ID is provided to a method like Delete.
+	ErrorInvalidID = errors.New("models: ID provided was invalid")
+
+	// ErrInvalidPassword is returned if while authenticating an email is found, but the password does not match
+	ErrInvalidPassword = errors.New("models: incorrect password provided")
+)
+
+const userPwPepper = "lets-go-red-wings"
+const hmacSecretKey = "go-green-go-white"
+
 func NewUserService(connectionInfo string) (*UserService, error) {
 	db, err := gorm.Open("postgres", connectionInfo)
 	db.LogMode(true)
@@ -28,20 +42,6 @@ type UserService struct {
 	db   *gorm.DB
 	hmac hash.HMAC
 }
-
-var (
-	// ErrNotFound is returned if a resource is not found in the database
-	ErrNotFound = errors.New("models: resource not found")
-
-	// ErrInvalidID is return when an invalid ID is provided to a method like Delete.
-	ErrorInvalidID = errors.New("models: ID provided was invalid")
-
-	// ErrInvalidPassword is returned if while authenticating an email is found, but the password does not match
-	ErrInvalidPassword = errors.New("models: incorrect password provided")
-)
-
-const userPwPepper = "lets-go-red-wings"
-const hmacSecretKey = "go-green-go-white"
 
 // ById will look up a user by a given UID
 // If a user is found, we will not return an error
