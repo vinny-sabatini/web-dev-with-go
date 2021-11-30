@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/vinny-sabatini/web-dev-with-go/models"
+	"github.com/vinny-sabatini/web-dev-with-go/rand"
 	"github.com/vinny-sabatini/web-dev-with-go/views"
 )
 
@@ -62,7 +63,10 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	signIn(w, &user)
+	err = u.signIn(w, &user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	http.Redirect(w, r, "/cookieTest", http.StatusFound)
 }
 
@@ -89,28 +93,47 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	signIn(w, user)
+	err = u.signIn(w, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	http.Redirect(w, r, "/cookieTest", http.StatusFound)
 }
 
 // signIn is used to sign a user in via cookies
-func signIn(w http.ResponseWriter, user *models.User) {
+func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+		err = u.us.Update(user)
+		if err != nil {
+			return err
+		}
+	}
 	cookie := http.Cookie{
-		Name:  "email",
-		Value: user.Email,
+		Name:  "remember_token",
+		Value: user.Remember,
 	}
 	http.SetCookie(w, &cookie)
+	return nil
 }
 
 // Cookie test is used to display cookies set on current user
 //
 // GET /cookieTest
 func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("email")
+	cookie, err := r.Cookie("remember_token")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Fprintln(w, "Email is:", cookie.Value)
+	user, err := u.us.ByRemember(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(w, user)
 }
