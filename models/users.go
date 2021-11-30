@@ -5,6 +5,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/vinny-sabatini/web-dev-with-go/hash"
+	"github.com/vinny-sabatini/web-dev-with-go/rand"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -15,13 +17,16 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 	if err != nil {
 		return nil, err
 	}
+	hmac := hash.NewHMAC(hmacSecretKey)
 	return &UserService{
-		db: db,
+		db:   db,
+		hmac: hmac,
 	}, nil
 }
 
 type UserService struct {
-	db *gorm.DB
+	db   *gorm.DB
+	hmac hash.HMAC
 }
 
 var (
@@ -36,6 +41,7 @@ var (
 )
 
 const userPwPepper = "lets-go-red-wings"
+const hmacSecretKey = "go-green-go-white"
 
 // ById will look up a user by a given UID
 // If a user is found, we will not return an error
@@ -56,6 +62,18 @@ func (us *UserService) ById(id uint) (*User, error) {
 func (us *UserService) ByEmail(email string) (*User, error) {
 	var user User
 	db := us.db.Where("email = ?", email)
+	err := first(db, &user)
+	return &user, err
+}
+
+// ByRemember looks up a user with a given remember token
+// and returns that user. This method will handle hashing
+// the token for us
+// Errors are the same as ByEmail and ById
+func (us *UserService) ByRemember(token string) (*User, error) {
+	var user User
+	rememberHash := us.hmac.Hash(token)
+	db := us.db.Where("remember_hash = ?", rememberHash)
 	err := first(db, &user)
 	return &user, err
 }
@@ -110,12 +128,23 @@ func (us *UserService) Create(user *User) error {
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+	}
+	user.RememberHash = us.hmac.Hash(user.Remember)
 	return us.db.Create(&user).Error
 }
 
 // Update will update the user with all of the provided
 // data in the provided user object
 func (us *UserService) Update(user *User) error {
+	if user.Remember != "" {
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
 	return us.db.Save(&user).Error
 }
 
@@ -160,4 +189,7 @@ type User struct {
 	// User has to have a Password hash (or we couldn't auth)
 	// This can also cause issues if you try to auto-migrate DB
 	PasswordHash string `gorm:"not null"`
+
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
 }
