@@ -23,6 +23,7 @@ var (
 
 	// This verifies our UserDB matches the userGorm type, otherwise the code will not compile
 	_ UserDB = &userGorm{}
+	_ UserDB = &userValidator{}
 )
 
 const userPwPepper = "lets-go-red-wings"
@@ -56,6 +57,17 @@ type UserDB interface {
 	DestructiveReset() error
 }
 
+// UserService is a set of methods used to manipulate and work with
+// the user model
+type UserService interface {
+	// Authenticate will verify the provided email address and password
+	// are correct. If they are correct, the user corresponding to that
+	// email will be returned, otherwise you will receive either:
+	// ErrNotFound, ErrInvalidPassword, or another error if something goes wrong.
+	Authenticate(email, password string) (*User, error)
+	UserDB
+}
+
 type userGorm struct {
 	db   *gorm.DB
 	hmac hash.HMAC
@@ -78,19 +90,19 @@ func newUserGorm(connectionInfo string) (*userGorm, error) {
 	}, nil
 }
 
-func NewUserService(connectionInfo string) (*UserService, error) {
+func NewUserService(connectionInfo string) (UserService, error) {
 	ug, err := newUserGorm(connectionInfo)
 	if err != nil {
 		return nil, err
 	}
-	return &UserService{
+	return &userService{
 		UserDB: &userValidator{
 			UserDB: ug,
 		},
 	}, nil
 }
 
-type UserService struct {
+type userService struct {
 	UserDB
 }
 
@@ -157,7 +169,7 @@ func first(db *gorm.DB, dst interface{}) error {
 //   user, nil
 // If another error is encountered, this will return
 //   nil, error
-func (us *UserService) Authenticate(email, password string) (*User, error) {
+func (us *userService) Authenticate(email, password string) (*User, error) {
 	foundUser, err := us.ByEmail(email)
 	if err != nil {
 		return nil, err
